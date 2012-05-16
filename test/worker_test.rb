@@ -354,6 +354,16 @@ context "Resque::Worker" do
     assert $BEFORE_FORK_CALLED
   end
 
+  test "Passes the worker to the before_first_fork hook" do
+    $BEFORE_FORK_WORKER = nil
+    Resque.before_first_fork = Proc.new { |w| $BEFORE_FORK_WORKER = w.id }
+    workerA = Resque::Worker.new(:jobs)
+
+    Resque::Job.create(:jobs, SomeJob, 20, '/tmp')
+    workerA.work(0)
+    assert_equal workerA.id, $BEFORE_FORK_WORKER
+  end
+
   test "very verbose works in the afternoon" do
     require 'time'
     $last_puts = ""
